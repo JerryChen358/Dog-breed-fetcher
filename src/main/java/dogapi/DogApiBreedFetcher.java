@@ -21,15 +21,42 @@ public class DogApiBreedFetcher implements BreedFetcher {
      * Fetch the list of sub breeds for the given breed from the dog.ceo API.
      * @param breed the breed to fetch sub breeds for
      * @return list of sub breeds for the given breed
-     * @throws BreedNotFoundException if the breed does not exist (or if the API call fails for any reason)
      */
     @Override
-    public List<String> getSubBreeds(String breed) {
-        // TODO Task 1: Complete this method based on its provided documentation
-        //      and the documentation for the dog.ceo API. You may find it helpful
-        //      to refer to the examples of using OkHttpClient from the last lab,
-        //      as well as the code for parsing JSON responses.
-        // return statement included so that the starter code can compile and run.
-        return new ArrayList<>();
+    public List<String> getSubBreeds(String breed) throws BreedNotFoundException{
+        // return statement included so that the starter code can compile and run.aaa
+        Request request = new Request.Builder().url("https://dog.ceo/api/breed/" + breed + "/list").build();
+        try (Response response = client.newCall(request).execute()){
+            if (!response.isSuccessful()){
+                throw new BreedNotFoundException(breed);
+            }
+            if (response.body() == null){
+                throw new BreedNotFoundException(breed);
+            }
+            String jsonData = response.body().string();
+            JSONObject json = new JSONObject(jsonData);
+
+            String status = json.getString("status");
+            if (!"success".equals(status)){
+
+                throw new BreedNotFoundException(breed);
+            }
+
+            JSONArray message = json.getJSONArray("message");
+            if (message == null){
+                throw new BreedNotFoundException(breed);
+            }
+            List<String> subBreeds = new ArrayList<>();
+            for (int i = 0; i < message.length(); i++){
+                subBreeds.add(message.getString(i));
+            }
+
+            return subBreeds;
+        } catch (IOException e) {
+            throw new RuntimeException("Other error", e);
+
+        }
+
+
     }
 }
